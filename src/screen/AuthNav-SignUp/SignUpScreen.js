@@ -4,11 +4,12 @@
 import { useNavigation } from '@react-navigation/native';
 
 import React, { useState } from 'react';
-import { Alert, Pressable, SafeAreaView, ScrollView, Text } from 'react-native';
+import { Alert, Pressable, SafeAreaView, ScrollView } from 'react-native';
+import { Text, useTheme } from 'react-native-paper';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { GeoPoint, doc, setDoc } from 'firebase/firestore';
 
 import SignButton from '../../component/Button/SignButton';
 import Input from '../../component/Input';
@@ -17,6 +18,7 @@ import styles from './SignUpScreen.style';
 
 function SignUp() {
   const navigation = useNavigation();
+  const { colors } = useTheme();
 
   const [userMail, setUserMail] = useState(null);
   const [userPassword, setUserPassword] = useState(null);
@@ -37,6 +39,7 @@ function SignUp() {
       return Alert.alert('Missing Information');
     }
 
+    // TODO individual users
     await AsyncStorage.setItem(
       'user',
       JSON.stringify({
@@ -58,6 +61,15 @@ function SignUp() {
           longitude: [],
         },
       });
+      await setDoc(doc(db, 'message', response.user.uid), {
+        id: response.user.uid,
+        text: '',
+        location: {
+          latitude: '',
+          longitude: '',
+        },
+        geopoint: new GeoPoint(0, 0),
+      });
     });
 
     navigation.navigate('SignIn');
@@ -67,20 +79,19 @@ function SignUp() {
     navigation.navigate('SignIn');
   };
 
+  // TODO icons for text input
   return (
     <SafeAreaView style={[styles.container]}>
       <ScrollView>
         <Input
           label="Type your e-mail"
           placeholder="example@example.com"
-          // value={email}
           onChangeText={setUserMail}
         />
         <Input
           label="Type your password"
           secureTextEntry
           placeholder="*****"
-          // value={password}
           onChangeText={setUserPassword}
         />
         <Input
@@ -91,10 +102,14 @@ function SignUp() {
         />
         <Input label="Type your username" placeholder="username" onChangeText={setUsername} />
         <Pressable onPress={navigateSignIn} style={styles.question_container}>
-          <Text style={styles.question_text}>Already have an account?</Text>
+          <Text style={{ color: colors.secondary }}>Already have an account?</Text>
         </Pressable>
       </ScrollView>
-      <SignButton title="Sign Up" onPress={handleSignUp} />
+      <SignButton
+        title="Sign Up"
+        onPress={handleSignUp}
+        accessibilityLabel="Button writes Sign Up"
+      />
     </SafeAreaView>
   );
 }

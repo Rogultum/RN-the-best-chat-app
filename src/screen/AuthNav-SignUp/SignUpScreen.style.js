@@ -7,8 +7,4 @@ export default StyleSheet.create({
   question_container: {
     alignItems: 'center',
   },
-  // TODO color
-  question_text: {
-    color: '#FF5A5F',
-  },
 });
