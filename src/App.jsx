@@ -21,6 +21,9 @@ const CombinedDefaultTheme = {
   colors: {
     ...PaperDefaultTheme.colors,
     ...NavigationDefaultTheme.colors,
+    primary: '#e2bc87',
+    secondary: '#dbc1ac',
+    tertiary: '#634832',
   },
 };
 const CombinedDarkTheme = {
@@ -29,6 +32,9 @@ const CombinedDarkTheme = {
   colors: {
     ...PaperDarkTheme.colors,
     ...NavigationDarkTheme.colors,
+    primary: '#e2bc87',
+    secondary: '#F8C8DC',
+    tertiary: '#101617',
   },
 };
 
