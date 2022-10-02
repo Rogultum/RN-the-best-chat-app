@@ -1,7 +1,8 @@
 import { useNavigation } from '@react-navigation/native';
 
 import React, { useState } from 'react';
-import { Alert, Pressable, SafeAreaView, ScrollView, Text } from 'react-native';
+import { Alert, Pressable, SafeAreaView, ScrollView } from 'react-native';
+import { Text, useTheme } from 'react-native-paper';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { signInWithEmailAndPassword } from 'firebase/auth';
@@ -16,6 +17,8 @@ import { auth, db } from '../../utils/firebase';
 import styles from './SignInScreen.style';
 
 function SignIn() {
+  const { colors } = useTheme();
+
   const [userPassword, setUserPassword] = useState(null);
   const [username, setUsername] = useState(null);
   const [userMail, setUserMail] = useState(null);
@@ -53,7 +56,7 @@ function SignIn() {
     });
 
     if (user.username === username && user.password === userPassword)
-      return navigation.navigate('BottomNavigation');
+      return navigation.navigate('ContactStack');
 
     return null;
   };
@@ -79,10 +82,14 @@ function SignIn() {
           onChangeText={setUserPassword}
         />
         <Pressable onPress={navigateSignUp} style={styles.question_container}>
-          <Text style={styles.question_text}>Don&apos;t have an account?</Text>
+          <Text style={{ color: colors.secondary }}>Don&apos;t have an account?</Text>
         </Pressable>
       </ScrollView>
-      <SignButton title="Sign In" onPress={handleSignIn} />
+      <SignButton
+        title="Sign In"
+        onPress={handleSignIn}
+        accessibilityLabel="Button writes Sign In"
+      />
     </SafeAreaView>
   );
 }
