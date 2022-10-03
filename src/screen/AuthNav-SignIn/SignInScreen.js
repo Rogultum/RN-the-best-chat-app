@@ -2,7 +2,7 @@ import { useNavigation } from '@react-navigation/native';
 
 import React, { useState } from 'react';
 import { Alert, Pressable, SafeAreaView, ScrollView } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
+import { Text, TextInput, useTheme } from 'react-native-paper';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { signInWithEmailAndPassword } from 'firebase/auth';
@@ -19,6 +19,8 @@ import styles from './SignInScreen.style';
 function SignIn() {
   const { colors } = useTheme();
 
+  const [secureText, setSecureText] = useState(true);
+
   const [userPassword, setUserPassword] = useState(null);
   const [username, setUsername] = useState(null);
   const [userMail, setUserMail] = useState(null);
@@ -31,34 +33,30 @@ function SignIn() {
 
   let count = 0;
   const handleSignIn = async () => {
-    const userData = await AsyncStorage.getItem('user');
-    const user = JSON.parse(userData);
-    if (user.username !== username) {
-      return Alert.alert('Username not found!');
-    }
-    if (user.email !== userMail) {
-      return Alert.alert('E-mail not found!');
-    }
-    if (user.password !== userPassword) {
-      count += 1;
-      if (count >= 3) {
-        // TODO navigation
-        setshowPasswordReset(true);
-      } else if (count < 3) return Alert.alert('Wrong password');
-    }
-
-    signInWithEmailAndPassword(auth, userMail, userPassword).then(async (response) => {
-      const userDoc = doc(db, 'user', response.user.uid);
-      const userRef = await getDoc(userDoc);
-      if (userRef.exists()) {
-        dispatch(signIn(userRef.data()));
-      }
-    });
-
-    if (user.username === username && user.password === userPassword)
-      return navigation.navigate('ContactStack');
-
-    return null;
+    signInWithEmailAndPassword(auth, userMail, userPassword)
+      .then(async (response) => {
+        const userDoc = doc(db, 'user', response.user.uid);
+        const userRef = await getDoc(userDoc);
+        if (userRef.exists()) {
+          dispatch(signIn(userRef.data()));
+        }
+        return navigation.navigate('ContactStack');
+      })
+      .catch((e) => {
+        switch (e.message) {
+          case 'Firebase: Error (auth/user-not-found).':
+            Alert.alert('E mail not found.');
+            break;
+          case 'Firebase: Error (auth/wrong-password).':
+            count += 1;
+            if (count < 3) Alert.alert('Wrong Password.');
+            if (count >= 3) Alert.alert('Do you want to reset your password?');
+            break;
+          default:
+            Alert.alert('Something went wrong during authentication.');
+            break;
+        }
+      });
   };
 
   const navigateSignUp = () => {
@@ -73,13 +71,29 @@ function SignIn() {
         onDismiss={() => setshowPasswordReset(false)}
       />
       <ScrollView>
-        <Input label="Type your username" placeholder="username" onChangeText={setUsername} />
-        <Input label="Type your Email" placeholder="Email" onChangeText={setUserMail} />
+        <Input
+          label="Type your username"
+          placeholder="username"
+          onChangeText={setUsername}
+          right={<TextInput.Icon icon="account" />}
+        />
+        <Input
+          label="Type your Email"
+          placeholder="Email"
+          onChangeText={setUserMail}
+          right={<TextInput.Icon icon="at" />}
+        />
         <Input
           label="Type your password"
-          secureTextEntry
+          secureTextEntry={secureText}
           placeholder="*****"
           onChangeText={setUserPassword}
+          right={
+            <TextInput.Icon
+              onPress={() => setSecureText(!secureText)}
+              icon={secureText ? 'eye' : 'eye-outline'}
+            />
+          }
         />
         <Pressable onPress={navigateSignUp} style={styles.question_container}>
           <Text style={{ color: colors.secondary }}>Don&apos;t have an account?</Text>
