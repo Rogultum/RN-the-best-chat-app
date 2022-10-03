@@ -4,10 +4,9 @@ import React, { useState } from 'react';
 import { Alert, Pressable, SafeAreaView, ScrollView } from 'react-native';
 import { Text, TextInput, useTheme } from 'react-native-paper';
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 import SignButton from '../../component/Button/SignButton';
 import CustomAlert from '../../component/CustomAlert/CustomAlert';
@@ -18,6 +17,8 @@ import styles from './SignInScreen.style';
 
 function SignIn() {
   const { colors } = useTheme();
+
+  const user = useSelector((state) => state.user.value);
 
   const [secureText, setSecureText] = useState(true);
 
@@ -40,6 +41,7 @@ function SignIn() {
         if (userRef.exists()) {
           dispatch(signIn(userRef.data()));
         }
+        if (username !== user.username) return Alert.alert('Wrong Username.');
         return navigation.navigate('ContactStack');
       })
       .catch((e) => {
