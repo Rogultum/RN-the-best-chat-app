@@ -30,12 +30,24 @@ function ChatScreen({ route }) {
   const { receiverId } = route.params;
 
   const roomId = user.id + receiverId;
+  const roomId2 = receiverId + user.id;
 
   const createChatRoom = async () => {
     const docRef = doc(db, 'chatroom', roomId);
-    const docSnap = await getDoc(docRef);
+    const docRef2 = doc(db, 'chatroom', roomId2);
+    let docSnap = await getDoc(docRef);
+    const docSnap2 = await getDoc(docRef2);
     if (docSnap.exists()) {
       await updateDoc(docRef, {
+        message: arrayUnion({
+          senderId: user.id,
+          receiverId,
+          text,
+        }),
+      });
+    } else if (docSnap2.exists()) {
+      docSnap = docSnap2;
+      await updateDoc(docRef2, {
         message: arrayUnion({
           senderId: user.id,
           receiverId,
@@ -52,6 +64,12 @@ function ChatScreen({ route }) {
         },
       });
     }
+    const messages = [];
+    docSnap.data().message.forEach((message) => {
+      messages.push(message);
+    });
+    console.log(messages);
+    setMessagesList(messages);
   };
 
   const fetchMessages = async () => {
