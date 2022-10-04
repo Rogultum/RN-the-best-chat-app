@@ -4,6 +4,7 @@ import React from 'react';
 import { useTheme } from 'react-native-paper';
 
 import ContactListScreen from '../../screen/BottomNav-ContactList/ContactListScreen';
+import StoryScreen from '../../screen/BottomNav-Story/StoryScreen';
 import SettingsStackNavigation from '../SettingsStackNavigation';
 
 const Tab = createMaterialBottomTabNavigator();
@@ -14,7 +15,6 @@ function BottomNavigation() {
   return (
     <Tab.Navigator barStyle={{ backgroundColor: colors.primary }} shifting>
       <Tab.Screen
-        id="1"
         name="ContactList"
         component={ContactListScreen}
         options={{
@@ -24,7 +24,15 @@ function BottomNavigation() {
         }}
       />
       <Tab.Screen
-        id="2"
+        name="Story"
+        component={StoryScreen}
+        options={{
+          tabBarIcon: 'human-greeting-proximity',
+          tabBarLabel: 'Share & Connect',
+          tabBarAccessibilityLabel: 'Bottom Tab writes Share and Connect',
+        }}
+      />
+      <Tab.Screen
         name="SettingsStack"
         component={SettingsStackNavigation}
         options={{
