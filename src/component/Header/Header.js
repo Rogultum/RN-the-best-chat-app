@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Alert } from 'react-native';
 import { Appbar, Menu, useTheme } from 'react-native-paper';
 
 function Header({ navigation, back }) {
@@ -6,23 +7,20 @@ function Header({ navigation, back }) {
   const openMenu = () => setVisible(true);
   const closeMenu = () => setVisible(false);
   const { colors } = useTheme();
-  // const { itemId } = route.params;
-  // console.log(route.params);
-  // console.log(route);
 
   return (
     <Appbar.Header elevated style={{ backgroundColor: colors.primary, color: 'red' }}>
       {back.title !== 'SignIn' ? <Appbar.BackAction onPress={navigation.goBack} /> : null}
-      <Appbar.Content title={back.title !== 'SignIn' ? 'Chat' : 'the-best-chat-app'} />
+      <Appbar.Content title={back.title !== 'SignIn' ? '{ title }' : 'the-best-chat-app'} />
       {!back.title !== 'SignIn' ? (
         <Menu
           visible={visible}
           onDismiss={closeMenu}
-          anchor={<Appbar.Action icon="menu" color={colors.tertiary} onPress={openMenu} />}
+          anchor={<Appbar.Action icon="cat" color={colors.tertiary} onPress={openMenu} />}
         >
           <Menu.Item
             onPress={() => {
-              console.log('Option 1 was pressed');
+              Alert.alert('Meowww');
             }}
             title="Option 1"
           />
