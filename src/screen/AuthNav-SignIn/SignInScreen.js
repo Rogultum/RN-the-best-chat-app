@@ -1,7 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 
 import React, { useState } from 'react';
-import { Alert, Pressable, SafeAreaView, ScrollView } from 'react-native';
+import { Alert, Pressable, SafeAreaView, ScrollView, View } from 'react-native';
 import { Text, TextInput, useTheme } from 'react-native-paper';
 
 import { signInWithEmailAndPassword } from 'firebase/auth';
@@ -34,15 +34,14 @@ function SignIn() {
 
   let count = 0;
   const handleSignIn = async () => {
-    signInWithEmailAndPassword(auth, userMail, userPassword)
+    await signInWithEmailAndPassword(auth, userMail, userPassword)
       .then(async (response) => {
         const userDoc = doc(db, 'user', response.user.uid);
         const userRef = await getDoc(userDoc);
         if (userRef.exists()) {
           dispatch(signIn(userRef.data()));
+          console.log(user.username);
         }
-        if (username !== user.username) return Alert.alert('Wrong Username.');
-        return navigation.navigate('ContactStack');
       })
       .catch((e) => {
         switch (e.message) {
@@ -59,6 +58,11 @@ function SignIn() {
             break;
         }
       });
+    if (username !== user.username) {
+      console.log(username, user.username);
+      return Alert.alert('Wrong Username.');
+    }
+    return navigation.navigate('ContactStack');
   };
 
   const navigateSignUp = () => {
@@ -72,10 +76,12 @@ function SignIn() {
         visible={showPasswordReset}
         onDismiss={() => setshowPasswordReset(false)}
       />
-      <ScrollView>
+
+      <View>
         <Input
           label="Type your username"
           placeholder="username"
+          value={username}
           onChangeText={setUsername}
           right={<TextInput.Icon icon="account" />}
         />
@@ -100,7 +106,7 @@ function SignIn() {
         <Pressable onPress={navigateSignUp} style={styles.question_container}>
           <Text style={{ color: colors.secondary }}>Don&apos;t have an account?</Text>
         </Pressable>
-      </ScrollView>
+      </View>
       <SignButton
         title="Sign In"
         onPress={handleSignIn}
