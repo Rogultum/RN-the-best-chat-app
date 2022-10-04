@@ -14,7 +14,9 @@ function ContactsList(props) {
   return (
     <Pressable
       style={styles.container}
-      onPress={() => navigation.navigate('Chat', { receiverId: contacts.id })}
+      onPress={() =>
+        navigation.navigate('Chat', { receiverId: contacts.id, title: contacts.username })
+      }
     >
       {/* TODO better image */}
       <Avatar.Image
