@@ -4,7 +4,7 @@
 
 /* eslint-disable no-return-await */
 import React, { useState } from 'react';
-import { Alert, Dimensions, Text, View } from 'react-native';
+import { Alert, Text, View, useWindowDimensions } from 'react-native';
 import { IconButton, useTheme } from 'react-native-paper';
 
 import * as ImagePicker from 'expo-image-picker';
@@ -29,8 +29,7 @@ function StoryScreen() {
 
   const renderComp = (item) => <ShowStory images={item} />;
 
-  const { width } = Dimensions.get('screen');
-  const { height } = Dimensions.get('screen');
+  const { height, width } = useWindowDimensions();
 
   async function uploadImageAsync(uri) {
     const blob = await new Promise((resolve, reject) => {
@@ -114,9 +113,7 @@ function StoryScreen() {
     // colSnap.data().photo.forEach((photoURL) => {
     //   stories.push(photoURL);
     // });
-    console.log('array', stories);
     setStoryList([...stories]);
-    console.log('list', storyList);
   }
 
   return (
