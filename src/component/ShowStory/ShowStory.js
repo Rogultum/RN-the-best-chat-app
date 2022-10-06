@@ -1,14 +1,31 @@
+/* eslint-disable react/destructuring-assignment */
 import React from 'react';
 import { Image, View } from 'react-native';
+import { Avatar, Text, useTheme } from 'react-native-paper';
 
 import styles from './ShowStory.style';
 
 function ShowStory(props) {
-  // console.log('sbt1', JSON.stringify(props.images.item[0].photoURL));
+  // console.log('sbt1', JSON.stringify(props.images.item.username));
+
+  const { colors } = useTheme();
 
   return (
     <View style={styles.container}>
-      <Image style={styles.image} source={{ uri: props.images.item[0].photoURL }} />
+      <View style={styles.inner_container}>
+        <Avatar.Image
+          size={28}
+          source={{
+            uri: props.images.item.userPhotoURL
+              ? props.images.item.userPhotoURL
+              : 'https://png.pngitem.com/pimgs/s/30-307416_profile-icon-png-image-free-download-searchpng-employee.png',
+          }}
+        />
+        <Text style={[styles.username, { color: colors.tertiary }]}>
+          @{props.images.item.username}
+        </Text>
+      </View>
+      <Image style={styles.image} source={{ uri: props.images.item.photo[0].photoURL }} />
     </View>
   );
 }
