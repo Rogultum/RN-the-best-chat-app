@@ -1,24 +1,36 @@
+/* eslint-disable no-unused-vars */
+
 /* eslint-disable func-names */
 
 /* eslint-disable no-return-await */
 import React, { useState } from 'react';
-import { Alert, Text, View } from 'react-native';
+import { Alert, Dimensions, Text, View } from 'react-native';
 import { IconButton, useTheme } from 'react-native-paper';
 
 import * as ImagePicker from 'expo-image-picker';
-import { doc, updateDoc } from 'firebase/firestore';
+import { arrayUnion, collection, doc, getDocs, updateDoc } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import Carousel from 'react-native-reanimated-carousel';
 import uuid from 'react-native-uuid';
 import { useSelector } from 'react-redux';
 
+import ShowStory from '../../component/ShowStory';
 import { db, storage } from '../../utils/firebase';
+import styles from './StoryScreen.style';
 
 function StoryScreen() {
   const { colors } = useTheme();
 
   const [image, setImage] = useState(null);
+  const [storyList, setStoryList] = useState([]);
 
   const user = useSelector((state) => state.user.value);
+
+  const renderComp = (item) => <ShowStory images={item} />;
+
+  const { width } = Dimensions.get('screen');
+  const { height } = Dimensions.get('screen');
 
   async function uploadImageAsync(uri) {
     const blob = await new Promise((resolve, reject) => {
@@ -27,7 +39,6 @@ function StoryScreen() {
         resolve(xhr.response);
       };
       xhr.onerror = function (e) {
-        console.log(e);
         reject(new TypeError('Network request failed'));
       };
       xhr.responseType = 'blob';
@@ -38,7 +49,6 @@ function StoryScreen() {
     const fileRef = ref(storage, uuid.v4());
     const result = await uploadBytes(fileRef, blob);
 
-    // We're done with the blob, close and release it
     blob.close();
 
     return await getDownloadURL(fileRef);
@@ -51,8 +61,6 @@ function StoryScreen() {
       aspect: [4, 3],
       quality: 1,
     });
-
-    console.log(result);
 
     if (!result.cancelled) {
       setImage(result.uri);
@@ -83,21 +91,73 @@ function StoryScreen() {
     const photoURL = await uploadImageAsync(image);
     const docRef = doc(db, 'story', user.id);
     await updateDoc(docRef, {
-      photoURL,
+      photo: arrayUnion({
+        photoURL,
+        date: Date.now(),
+      }),
     });
   };
 
+  async function fetchStories() {
+    const colRef = collection(db, 'story');
+    const colSnap = await getDocs(colRef);
+
+    const stories = [];
+
+    // Object.entries(colSnap.data().photo).forEach((photo) => {
+    //   stories.push(photo);
+    // });
+
+    colSnap.forEach((story) => {
+      stories.push(story.data().photo);
+    });
+    // colSnap.data().photo.forEach((photoURL) => {
+    //   stories.push(photoURL);
+    // });
+    console.log('array', stories);
+    setStoryList([...stories]);
+    console.log('list', storyList);
+  }
+
   return (
-    <View>
-      <IconButton
-        icon="plus"
-        mode="outlined"
-        iconColor={colors.secondary}
-        size={20}
-        onPress={() => pickCameraImage()}
-      />
-      <Text>StoryScreen</Text>
-    </View>
+    <GestureHandlerRootView style={styles.container}>
+      <View>
+        <View style={styles.inner_container}>
+          <IconButton
+            icon="plus"
+            mode="outlined"
+            iconColor={colors.secondary}
+            size={20}
+            onPress={() => pickLibraryImage()}
+          />
+          <Text>StoryScreen</Text>
+          <IconButton
+            icon="plus"
+            mode="outlined"
+            iconColor={colors.secondary}
+            size={20}
+            onPress={() => handleUpload()}
+          />
+          <IconButton
+            icon="plus"
+            mode="outlined"
+            iconColor={colors.secondary}
+            size={20}
+            onPress={() => fetchStories()}
+          />
+        </View>
+        <Carousel
+          loop
+          width={width}
+          height={height}
+          autoPlay={false}
+          data={storyList}
+          scrollAnimationDuration={1000}
+          onSnapToItem={(index) => console.log('current index:', index)}
+          renderItem={renderComp}
+        />
+      </View>
+    </GestureHandlerRootView>
   );
 }
 
