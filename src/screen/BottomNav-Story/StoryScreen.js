@@ -98,7 +98,7 @@ function StoryScreen() {
     await setDoc(doc(db, 'story', now), {
       id: user.id,
       username: user.username,
-      userPhotoURL: '',
+      userPhotoURL: user.photoURL,
       date: Date.now(),
       photoURL,
     });
@@ -167,7 +167,7 @@ function StoryScreen() {
         </View>
         <Text style={[styles.story_text, { color: colors.tertiary }]}>Your Story!</Text>
         <Modal
-          animationType="slide"
+          animationType="fade"
           transparent
           visible={modalVisible}
           onRequestClose={() => {
