@@ -1,14 +1,16 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+
 /* eslint-disable no-unused-vars */
 
 /* eslint-disable func-names */
 
 /* eslint-disable no-return-await */
-import React, { useState } from 'react';
-import { Alert, Text, View, useWindowDimensions } from 'react-native';
-import { IconButton, useTheme } from 'react-native-paper';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Alert, Modal, Pressable, View, useWindowDimensions } from 'react-native';
+import { IconButton, Text, useTheme } from 'react-native-paper';
 
 import * as ImagePicker from 'expo-image-picker';
-import { arrayUnion, collection, doc, getDocs, updateDoc } from 'firebase/firestore';
+import { collection, doc, getDocs, orderBy, query, setDoc, where } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Carousel from 'react-native-reanimated-carousel';
@@ -23,13 +25,16 @@ function StoryScreen() {
   const { colors } = useTheme();
 
   const [image, setImage] = useState(null);
+
   const [storyList, setStoryList] = useState([]);
+
+  const [modalVisible, setModalVisible] = useState(false);
 
   const user = useSelector((state) => state.user.value);
 
-  const renderComp = (item) => <ShowStory images={item} />;
-
   const { height, width } = useWindowDimensions();
+
+  const renderComp = (item) => <ShowStory images={item} />;
 
   async function uploadImageAsync(uri) {
     const blob = await new Promise((resolve, reject) => {
@@ -86,63 +91,127 @@ function StoryScreen() {
     }
   };
 
-  const handleUpload = async () => {
+  const handleUpload = useCallback(async () => {
     const photoURL = await uploadImageAsync(image);
     const docRef = doc(db, 'story', user.id);
-    await updateDoc(docRef, {
-      photo: arrayUnion({
-        photoURL,
-        date: Date.now(),
-      }),
+    const now = Date.now().toString();
+    await setDoc(doc(db, 'story', now), {
+      id: user.id,
+      username: user.username,
+      userPhotoURL: '',
+      date: Date.now(),
+      photoURL,
     });
-  };
+  }, [pickCameraImage, pickLibraryImage]);
 
   async function fetchStories() {
-    const colRef = collection(db, 'story');
-    const colSnap = await getDocs(colRef);
-
+    const now = Date.now();
+    const q = query(
+      collection(db, 'story'),
+      where('date', '>', now - 86400000),
+      orderBy('date'),
+      orderBy('id')
+    );
+    const colSnap = await getDocs(q);
     const stories = [];
-
-    // Object.entries(colSnap.data().photo).forEach((photo) => {
-    //   stories.push(photo);
-    // });
-
     colSnap.forEach((story) => {
-      stories.push(story.data().photo);
+      stories.push(story.data());
     });
-    // colSnap.data().photo.forEach((photoURL) => {
-    //   stories.push(photoURL);
-    // });
     setStoryList([...stories]);
   }
+
+  const link = 'https://type.fit/api/quotes';
+  const [quote, setQuote] = useState();
+  const [author, setAuthor] = useState();
+
+  function fetchQuote() {
+    fetch(link)
+      .then((response) => response.json())
+      .then((data) => {
+        const randomQuoteIndex = Math.round(Math.random() * data.length);
+        setQuote(data[randomQuoteIndex].text);
+        setAuthor(data[randomQuoteIndex].author);
+      });
+  }
+
+  useEffect(() => {
+    fetchStories();
+  }, [handleUpload]);
+
+  useEffect(() => {
+    fetchQuote();
+    fetchStories();
+  }, []);
 
   return (
     <GestureHandlerRootView style={styles.container}>
       <View>
-        <View style={styles.inner_container}>
+        <View style={styles.story_container}>
           <IconButton
+            style={styles.story_button}
             icon="plus"
             mode="outlined"
             iconColor={colors.secondary}
             size={20}
-            onPress={() => pickLibraryImage()}
+            onPress={() => setModalVisible(!modalVisible)}
           />
-          <Text>StoryScreen</Text>
-          <IconButton
-            icon="plus"
-            mode="outlined"
-            iconColor={colors.secondary}
-            size={20}
-            onPress={() => handleUpload()}
-          />
-          <IconButton
-            icon="plus"
-            mode="outlined"
-            iconColor={colors.secondary}
-            size={20}
-            onPress={() => fetchStories()}
-          />
+          <View style={styles.quote_container}>
+            <Text
+              style={[styles.quote_text, { color: colors.tertiary }]}
+              onPress={() => fetchQuote()}
+            >
+              &quot;{quote}&quot;{'    -'}
+              {author}
+            </Text>
+          </View>
         </View>
+        <Text style={[styles.story_text, { color: colors.tertiary }]}>Your Story!</Text>
+        <Modal
+          animationType="slide"
+          transparent
+          visible={modalVisible}
+          onRequestClose={() => {
+            setModalVisible(!modalVisible);
+          }}
+        >
+          <View style={styles.centeredView}>
+            <View style={[styles.modalView, { backgroundColor: colors.secondary }]}>
+              <IconButton
+                style={styles.close_button}
+                icon="close-circle-outline"
+                size={14}
+                iconColor={colors.tertiary}
+                onPress={() => setModalVisible(!modalVisible)}
+              />
+              <View style={styles.selection_button}>
+                <IconButton
+                  icon="camera-outline"
+                  mode="outlined"
+                  iconColor={colors.tertiary}
+                  size={20}
+                  onPress={() => pickCameraImage()}
+                />
+                <IconButton
+                  icon="image-multiple-outline"
+                  mode="outlined"
+                  iconColor={colors.tertiary}
+                  size={20}
+                  onPress={() => pickLibraryImage()}
+                />
+              </View>
+              <Text style={[styles.modalText, { color: colors.tertiary }]}>Pick your Image!</Text>
+              <Pressable
+                style={[styles.button, { backgroundColor: colors.primary }]}
+                onPress={() => {
+                  handleUpload();
+                  setModalVisible(!modalVisible);
+                }}
+              >
+                <Text style={[styles.textStyle, { color: colors.tertiary }]}>Save Story</Text>
+              </Pressable>
+            </View>
+          </View>
+        </Modal>
         <Carousel
           loop
           width={width}
@@ -150,7 +219,7 @@ function StoryScreen() {
           autoPlay={false}
           data={storyList}
           scrollAnimationDuration={1000}
-          onSnapToItem={(index) => console.log('current index:', index)}
+          // onSnapToItem={(index) => console.log('current index:', index)}
           renderItem={renderComp}
         />
       </View>
