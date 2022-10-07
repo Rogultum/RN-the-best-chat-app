@@ -28,7 +28,8 @@
     "react-native-uuid": "^2.0.1",
     "react-redux": "^8.0.4",
     "react-native-gesture-handler": "~2.5.0",
-    "react-native-reanimated": "~2.9.1"
+    "react-native-reanimated": "~2.9.1",
+    "expo-location": "~14.3.0"
   },
   "devDependencies": {
     "@babel/core": "^7.12.9",
