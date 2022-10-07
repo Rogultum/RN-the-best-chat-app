@@ -28,8 +28,8 @@ function BottomNavigation() {
         component={StoryScreen}
         options={{
           tabBarIcon: 'human-greeting-proximity',
-          tabBarLabel: 'Share & Connect',
-          tabBarAccessibilityLabel: 'Bottom Tab writes Share and Connect',
+          tabBarLabel: 'Status',
+          tabBarAccessibilityLabel: 'Bottom Tab writes Status',
         }}
       />
       <Tab.Screen
