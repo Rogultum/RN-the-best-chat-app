@@ -48,11 +48,6 @@ function SignUp() {
         username,
         photoURL: '',
       });
-      await setDoc(doc(db, 'story', response.user.uid), {
-        id: response.user.uid,
-        photoURL: [],
-        // geopoint: new GeoPoint(0, 0),
-      });
       await AsyncStorage.setItem(
         response.user.uid,
         JSON.stringify({
