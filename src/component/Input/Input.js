@@ -15,6 +15,7 @@ function Input({
   right,
   left,
   mode,
+  defaultValue,
 }) {
   const { colors } = useTheme();
 
@@ -23,6 +24,8 @@ function Input({
       <Text style={[styles.label, { color: colors.tertiary }]}>{label}</Text>
       <View style={[styles.input_container, { borderColor: colors.secondary }]}>
         <TextInput
+          autoCapitalize="none"
+          defaultValue={defaultValue}
           value={value}
           style={[styles.text_input, { backgroundColor: colors.primary }]}
           placeholder={placeholder}
