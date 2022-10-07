@@ -27,9 +27,9 @@ function BottomNavigation() {
         name="Story"
         component={StoryScreen}
         options={{
-          tabBarIcon: 'human-greeting-proximity',
-          tabBarLabel: 'Status',
-          tabBarAccessibilityLabel: 'Bottom Tab writes Status',
+          tabBarIcon: 'all-inclusive',
+          tabBarLabel: 'Story',
+          tabBarAccessibilityLabel: 'Bottom Tab writes Story',
         }}
       />
       <Tab.Screen
