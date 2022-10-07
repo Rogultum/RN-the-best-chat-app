@@ -2,11 +2,14 @@ import { StyleSheet } from 'react-native';
 
 export default StyleSheet.create({
   container: {
-    flex: 1,
+    flex: 0.4,
     borderWidth: 1,
   },
   image: {
-    flex: 0.5,
+    marginTop: 12,
+    flex: 1,
+    height: undefined,
+    width: undefined,
   },
   inner_container: {
     flexDirection: 'row',
