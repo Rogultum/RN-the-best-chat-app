@@ -10,7 +10,16 @@ import { Alert, Modal, Pressable, View, useWindowDimensions } from 'react-native
 import { IconButton, Text, useTheme } from 'react-native-paper';
 
 import * as ImagePicker from 'expo-image-picker';
-import { collection, doc, getDocs, orderBy, query, setDoc, where } from 'firebase/firestore';
+import {
+  collection,
+  doc,
+  getDocs,
+  onSnapshot,
+  orderBy,
+  query,
+  setDoc,
+  where,
+} from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Carousel from 'react-native-reanimated-carousel';
@@ -34,7 +43,7 @@ function StoryScreen() {
 
   const { height, width } = useWindowDimensions();
 
-  const renderComp = (item) => <ShowStory images={item} />;
+  const renderStories = (item) => <ShowStory images={item} />;
 
   async function uploadImageAsync(uri) {
     const blob = await new Promise((resolve, reject) => {
@@ -62,8 +71,8 @@ function StoryScreen() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.All,
       allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
+      aspect: [9, 16],
+      quality: 0.7,
     });
 
     if (!result.cancelled) {
@@ -82,8 +91,8 @@ function StoryScreen() {
     const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.All,
       allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
+      aspect: [9, 16],
+      quality: 0.7,
     });
 
     if (!result.cancelled) {
@@ -120,6 +129,23 @@ function StoryScreen() {
     setStoryList([...stories]);
   }
 
+  async function fetch() {
+    const now = Date.now();
+    const q = query(
+      collection(db, 'story'),
+      where('date', '>', now - 86400000),
+      orderBy('date'),
+      orderBy('id')
+    );
+    onSnapshot(q, (storiesSnapshot) => {
+      const stories = [];
+      storiesSnapshot.forEach((story) => {
+        stories.push(story.data());
+      });
+      setStoryList([...stories]);
+    });
+  }
+
   const link = 'https://type.fit/api/quotes';
   const [quote, setQuote] = useState();
   const [author, setAuthor] = useState();
@@ -134,13 +160,24 @@ function StoryScreen() {
       });
   }
 
-  useEffect(() => {
-    fetchStories();
-  }, [handleUpload]);
+  const link2 = 'https://api.quotable.io/random';
+
+  function fetchQuote2() {
+    fetch(link)
+      .then((response) => response.json())
+      .then((data) => {
+        setQuote(data.content);
+        setAuthor(data.author);
+      });
+  }
 
   useEffect(() => {
-    fetchQuote();
+    fetch();
+  }, []);
+
+  useEffect(() => {
     fetchStories();
+    fetchQuote();
   }, []);
 
   return (
@@ -156,13 +193,15 @@ function StoryScreen() {
             onPress={() => setModalVisible(!modalVisible)}
           />
           <View style={styles.quote_container}>
-            <Text
-              style={[styles.quote_text, { color: colors.tertiary }]}
-              onPress={() => fetchQuote()}
-            >
-              &quot;{quote}&quot;{'    -'}
-              {author}
-            </Text>
+            {quote && (
+              <Text
+                style={[styles.quote_text, { color: colors.tertiary }]}
+                onPress={() => fetchQuote()}
+              >
+                &quot;{quote}&quot;{'    -'}
+                {author}
+              </Text>
+            )}
           </View>
         </View>
         <Text style={[styles.story_text, { color: colors.tertiary }]}>Your Story!</Text>
@@ -219,8 +258,7 @@ function StoryScreen() {
           autoPlay={false}
           data={storyList}
           scrollAnimationDuration={1000}
-          // onSnapToItem={(index) => console.log('current index:', index)}
-          renderItem={renderComp}
+          renderItem={renderStories}
         />
       </View>
     </GestureHandlerRootView>
