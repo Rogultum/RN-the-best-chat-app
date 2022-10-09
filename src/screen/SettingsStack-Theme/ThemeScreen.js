@@ -32,20 +32,23 @@ function ThemeScreen() {
           name="white-balance-sunny"
           color="#FFFC66"
           size={66}
+          accessibilityLabel="Shining Sun icon"
         />
       )}
       <Switch
         style={[{ backgroundColor: theme.colors.accent }]}
-        color="yellow"
+        color="#EEEE9B"
         value={isSwitchOn}
         onValueChange={onToggleSwitch}
+        accessibilityLabel="Switch that can be turned on and off"
       />
       {!isSwitchOn && (
         <MaterialCommunityIcons
           style={{ marginLeft: 2, marginTop: 18 }}
           name="weather-night"
-          color="yellow"
+          color="#C0C8CF"
           size={66}
+          accessibilityLabel="Moon and Stars icon"
         />
       )}
       <Button
