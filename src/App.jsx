@@ -32,9 +32,9 @@ const CombinedDarkTheme = {
   colors: {
     ...PaperDarkTheme.colors,
     ...NavigationDarkTheme.colors,
-    primary: '#e2bc87',
-    secondary: '#F8C8DC',
-    tertiary: '#101617',
+    primary: '#38220f',
+    secondary: '#967259',
+    tertiary: '#e2bc87',
   },
 };
 
