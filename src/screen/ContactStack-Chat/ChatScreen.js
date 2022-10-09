@@ -167,7 +167,6 @@ function ChatScreen({ route }) {
 
   return (
     <View style={styles.container}>
-      <Text onPress={fetch}>{receiverId}</Text>
       <Portal>
         <Dialog visible={visible} onDismiss={hideDialog}>
           <Dialog.Title>Alert</Dialog.Title>
