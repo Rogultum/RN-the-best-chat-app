@@ -45,6 +45,9 @@ export default StyleSheet.create({
     right: 0,
     top: 0,
   },
+  input: {
+    flexDirection: 'row',
+  },
   button: {
     borderRadius: 20,
     padding: 10,

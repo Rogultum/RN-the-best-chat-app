@@ -160,7 +160,7 @@ function SettingsScreen({ navigation }) {
               iconColor={colors.tertiary}
               onPress={() => setModalVisible(!modalVisible)}
             />
-            <View style={styles.selection_button}>
+            <View style={styles.input}>
               <TextInput value={text} onChangeText={setText} />
             </View>
             <Text style={[styles.modalText, { color: colors.tertiary }]}>Change your e-mail.</Text>
