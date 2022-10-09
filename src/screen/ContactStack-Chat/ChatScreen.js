@@ -1,8 +1,10 @@
-/* eslint-disable import/no-extraneous-dependencies */
-
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useEffect, useState } from 'react';
-import { Modal, Pressable, Text, View } from 'react-native';
+
+/* eslint-disable no-unused-expressions */
+
+/* eslint-disable import/no-extraneous-dependencies */
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Alert, FlatList, Modal, Pressable, Text, View } from 'react-native';
 import {
   Button,
   Dialog,
@@ -14,12 +16,14 @@ import {
 } from 'react-native-paper';
 
 import Icon from '@expo/vector-icons/MaterialCommunityIcons';
-import { FlashList } from '@shopify/flash-list';
+// Regularly experimenting with flashlist
+// import { FlashList } from '@shopify/flash-list';
 import * as Location from 'expo-location';
-import { arrayUnion, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
-import { useSelector } from 'react-redux';
+import { arrayUnion, doc, getDoc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
+import { useDispatch, useSelector } from 'react-redux';
 
 import MessageBox from '../../component/MessageBox/MessageBox';
+import { saveLocation } from '../../redux/slice/locationSlice';
 import { db } from '../../utils/firebase';
 import styles from './ChatScreen.style';
 
@@ -28,23 +32,29 @@ function ChatScreen({ route }) {
 
   const { colors } = useTheme();
 
+  const [count, setCount] = useState(0);
+
   const [messagesList, setMessagesList] = useState([]);
 
   const [text, setText] = useState();
 
   const [modalVisible, setModalVisible] = useState(false);
 
-  const [location, setLocation] = useState();
+  const dispatch = useDispatch();
+  const reduxLocation = useSelector((state) => state.location.value);
 
   const { receiverId } = route.params;
 
   const roomId = user.id + receiverId;
   const roomId2 = receiverId + user.id;
-  const docRef = doc(db, 'chatroom', roomId);
+  let docRef = doc(db, 'chatroom', roomId);
   const docRef2 = doc(db, 'chatroom', roomId2);
 
-  const updateDatabase = async () => {
+  const updateDatabase = useCallback(async () => {
     let docSnap = await getDoc(docRef);
+    let type;
+    if (text !== 'send Iocation...') type = 'text';
+    else type = 'location';
     const docSnap2 = await getDoc(docRef2);
     if (docSnap.exists()) {
       await updateDoc(docRef, {
@@ -52,6 +62,9 @@ function ChatScreen({ route }) {
           senderId: user.id,
           receiverId,
           text,
+          type,
+          latitude: type === 'location' ? reduxLocation.coords.latitude : ' ',
+          longitude: type === 'location' ? reduxLocation.coords.longitude : ' ',
         }),
       });
     } else if (docSnap2.exists()) {
@@ -61,6 +74,9 @@ function ChatScreen({ route }) {
           senderId: user.id,
           receiverId,
           text,
+          type,
+          latitude: type === 'location' ? reduxLocation.coords.latitude : ' ',
+          longitude: type === 'location' ? reduxLocation.coords.longitude : ' ',
         }),
       });
     } else {
@@ -71,12 +87,16 @@ function ChatScreen({ route }) {
             senderId: user.id,
             receiverId,
             text,
+            type,
+            latitude: type === 'location' ? reduxLocation.coords.latitude : ' ',
+            longitude: type === 'location' ? reduxLocation.coords.longitude : ' ',
           },
         ],
       });
     }
-  };
+  }, [text, count]);
 
+  // TODO learn to cache already sent messages.
   const fetchMessages = async () => {
     let docSnap = await getDoc(docRef);
     const docSnap2 = await getDoc(docRef2);
@@ -90,7 +110,34 @@ function ChatScreen({ route }) {
     }
   };
 
+  useEffect(() => {
+    fetch();
+  }, []);
+
+  useEffect(() => {
+    fetchMessages();
+  }, []);
+
+  const fetch = async () => {
+    const docSnap = await getDoc(docRef);
+    const docSnap2 = await getDoc(docRef2);
+    if (docSnap2.exists()) docRef = docRef2;
+    if (docSnap.exists()) {
+      onSnapshot(docRef, (messsagesSnapshot) => {
+        const messages = [];
+        messsagesSnapshot.data().message.forEach((message) => {
+          messages.push(message);
+        });
+        setMessagesList(messages);
+      });
+    }
+  };
+
+  const memoDep = messagesList[-1];
+
   const renderMessages = ({ item }) => <MessageBox messages={item} />;
+
+  const memoizedRender = useMemo(() => renderMessages, [memoDep]);
 
   const [visible, setVisible] = useState();
 
@@ -105,30 +152,28 @@ function ChatScreen({ route }) {
     }
 
     const locationData = await Location.getCurrentPositionAsync({});
-    setLocation(locationData);
-    console.log(location);
-    // const docRef = doc(db, 'chatroom', user.id);
-    // await updateDoc(docRef, {
-    //   'location.id': arrayUnion(locationData.timestamp),
-    //   'location.latitude': arrayUnion(locationData.coords.latitude),
-    //   'location.longitude': arrayUnion(locationData.coords.longitude),
-    //   'location.photoURL': arrayUnion(photoURL),
-    // });
+
+    locationData.coords.latitude
+      ? dispatch(saveLocation(locationData))
+      : Alert.alert('Try again, please.');
   };
 
-  useEffect(() => {
-    fetchMessages();
-  }, [updateDatabase]);
+  const handleShareLocation = async () => {
+    setText('send Iocation...');
+    await updateDatabase();
+  };
+
+  const flashListRef = useRef(null);
 
   return (
     <View style={styles.container}>
-      <Text onPress={fetchMessages}>{receiverId}</Text>
+      <Text onPress={fetch}>{receiverId}</Text>
       <Portal>
         <Dialog visible={visible} onDismiss={hideDialog}>
           <Dialog.Title>Alert</Dialog.Title>
           <Dialog.Content>
             <Paragraph>
-              You&aposve denied location access! To continue, Please grant acces from setting.
+              You&apos;ve denied location access! To continue, Please grant acces from setting.
             </Paragraph>
           </Dialog.Content>
           <Dialog.Actions>
@@ -164,8 +209,10 @@ function ChatScreen({ route }) {
               />
             </View>
             <Pressable
+              // disabled={location}
               style={[styles.button, { backgroundColor: colors.primary }]}
               onPress={() => {
+                handleShareLocation();
                 setModalVisible(!modalVisible);
               }}
             >
@@ -176,7 +223,13 @@ function ChatScreen({ route }) {
           </View>
         </View>
       </Modal>
-      <FlashList data={messagesList} renderItem={renderMessages} estimatedItemSize={100} />
+      <FlatList
+        data={messagesList}
+        renderItem={memoizedRender}
+        estimatedItemSize={100}
+        ref={flashListRef}
+        onContentSizeChange={() => flashListRef.current.scrollToEnd()}
+      />
       <View style={styles.input_container}>
         <TextInput
           style={styles.input}
@@ -194,6 +247,7 @@ function ChatScreen({ route }) {
           onPress={() => {
             updateDatabase();
             setText('');
+            setCount(count + 1);
           }}
         />
       </View>
