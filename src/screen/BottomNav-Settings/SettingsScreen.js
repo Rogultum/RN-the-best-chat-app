@@ -11,11 +11,9 @@ import {
   Avatar,
   Button,
   IconButton,
-  List,
   Snackbar,
   Text,
   TextInput,
-  TouchableRipple,
   useTheme,
 } from 'react-native-paper';
 
@@ -38,7 +36,6 @@ function SettingsScreen({ navigation }) {
   const { colors } = useTheme();
 
   const user = useSelector((state) => state.user.value);
-  console.log(user);
 
   const [visiblePasswordSnackBar, setVisiblePasswordSnackBar] = useState(false);
   const [visibleSnackBar, setVisibleSnackBar] = useState(false);
@@ -119,7 +116,7 @@ function SettingsScreen({ navigation }) {
     await updateDoc(docRef, {
       photoURL,
     });
-    dispatch(updateUser(photoURL));
+    dispatch(updateUser({ photoURL }));
   };
 
   function sendPasswordResetMail() {
@@ -135,6 +132,15 @@ function SettingsScreen({ navigation }) {
         Alert.alert('There was a problem, please sign-out then sign-in and try again.');
       });
   }
+
+  // TODO prevent user to make too many reads on firebase
+  async function handleUpdateDoc(texts) {
+    const docRef = doc(db, 'user', user.id);
+    await updateDoc(docRef, {
+      username: texts,
+    });
+  }
+
   return (
     <View style={styles.container}>
       <Modal
@@ -196,7 +202,6 @@ function SettingsScreen({ navigation }) {
       >
         Password reset e-mail sent.
       </Snackbar>
-      {/* <Text onPress={() => console.log(user)}>update</Text> */}
       <Pressable onPress={() => setIsEditable(true)}>
         {!isEditable ? (
           <Text>{user.username}</Text>
@@ -205,7 +210,11 @@ function SettingsScreen({ navigation }) {
             mode="outlined"
             style={{ width: 80, height: 40, marginBottom: 8 }}
             value={user.username}
-            // onChangeText={(text) => null}
+            onChangeText={(texts) => {
+              setText(texts);
+              dispatch(updateUser({ username: texts }));
+              handleUpdateDoc(texts);
+            }}
             onBlur={() => setIsEditable(false)}
           />
         )}
@@ -213,7 +222,7 @@ function SettingsScreen({ navigation }) {
       <Avatar.Image
         style={[styles.image, { backgroundColor: colors.primary }]}
         size={96}
-        source={{ uri: image }}
+        source={{ uri: user.photoURL ? user.photoURL : image }}
       />
       <View style={styles.upload_text_container}>
         <Text>Upload a Picture with</Text>
