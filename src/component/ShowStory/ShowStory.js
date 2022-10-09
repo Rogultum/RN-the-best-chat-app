@@ -6,8 +6,6 @@ import { Avatar, Text, useTheme } from 'react-native-paper';
 import styles from './ShowStory.style';
 
 function ShowStory(props) {
-  // console.log('sbt1', JSON.stringify(props.images.item.username));
-
   const { colors } = useTheme();
 
   return (
@@ -25,7 +23,7 @@ function ShowStory(props) {
           @{props.images.item.username}
         </Text>
       </View>
-      <Image style={styles.image} source={{ uri: props.images.item.photo[0].photoURL }} />
+      <Image style={[styles.image]} source={{ uri: props.images.item.photoURL }} />
     </View>
   );
 }
