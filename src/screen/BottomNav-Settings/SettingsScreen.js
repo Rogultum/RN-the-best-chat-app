@@ -6,29 +6,55 @@
 
 /* eslint-disable no-return-await */
 import React, { useEffect, useState } from 'react';
-import { Alert, View } from 'react-native';
-import { Avatar, Button, Dialog, Paragraph, Portal, Text, useTheme } from 'react-native-paper';
+import { Alert, Modal, Pressable, View } from 'react-native';
+import {
+  Avatar,
+  Button,
+  IconButton,
+  List,
+  Snackbar,
+  Text,
+  TextInput,
+  TouchableRipple,
+  useTheme,
+} from 'react-native-paper';
 
 import * as ImagePicker from 'expo-image-picker';
+import { sendPasswordResetEmail, updateEmail } from 'firebase/auth';
 import { arrayUnion, doc, updateDoc } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import uuid from 'react-native-uuid';
 import { useDispatch, useSelector } from 'react-redux';
 
 import SegmentedChoiceButton from '../../component/Button/SegmentedChoiceButton/SegmentedChoiceButton';
+import ListItem from '../../component/ListItem/ListItem';
 import { updateUser } from '../../redux/slice/userSlice';
-import { db, storage } from '../../utils/firebase';
+import { auth, db, storage } from '../../utils/firebase';
 import styles from './SettingsScreen.style';
 
 function SettingsScreen({ navigation }) {
-  const { colors } = useTheme();
-
   const dispatch = useDispatch();
 
+  const { colors } = useTheme();
+
   const user = useSelector((state) => state.user.value);
-  // console.log(user);
+  console.log(user);
+
+  const [visiblePasswordSnackBar, setVisiblePasswordSnackBar] = useState(false);
+  const [visibleSnackBar, setVisibleSnackBar] = useState(false);
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [text, setText] = useState();
 
   const [image, setImage] = useState();
+
+  const [isEditable, setIsEditable] = useState(false);
+
+  const enums = [
+    'You should definitely change that 123123',
+    'Use the same password everywhere so you never forget it!',
+    'Catchy song of this season...',
+  ];
 
   async function uploadImageAsync(uri) {
     const blob = await new Promise((resolve, reject) => {
@@ -48,7 +74,6 @@ function SettingsScreen({ navigation }) {
     const fileRef = ref(storage, uuid.v4());
     const result = await uploadBytes(fileRef, blob);
 
-    // We're done with the blob, close and release it
     blob.close();
 
     return await getDownloadURL(fileRef);
@@ -97,8 +122,94 @@ function SettingsScreen({ navigation }) {
     dispatch(updateUser(photoURL));
   };
 
+  function sendPasswordResetMail() {
+    sendPasswordResetEmail(auth, user.email);
+  }
+
+  function handleUpdateEmail() {
+    updateEmail(auth.currentUser, text)
+      .then(() => {
+        Alert.alert('E-Mail changed.');
+      })
+      .catch((error) => {
+        Alert.alert('There was a problem, please sign-out then sign-in and try again.');
+      });
+  }
   return (
     <View style={styles.container}>
+      <Modal
+        animationType="none"
+        transparent
+        visible={modalVisible}
+        onRequestClose={() => {
+          setModalVisible(!modalVisible);
+        }}
+      >
+        <View style={styles.centeredView}>
+          <View style={[styles.modalView, { backgroundColor: colors.secondary }]}>
+            <IconButton
+              style={styles.close_button}
+              icon="close-circle-outline"
+              size={14}
+              iconColor={colors.tertiary}
+              onPress={() => setModalVisible(!modalVisible)}
+            />
+            <View style={styles.selection_button}>
+              <TextInput value={text} onChangeText={setText} />
+            </View>
+            <Text style={[styles.modalText, { color: colors.tertiary }]}>Change your e-mail.</Text>
+            <Pressable
+              style={[styles.button, { backgroundColor: colors.primary }]}
+              onPress={() => {
+                handleUpdateEmail();
+                setModalVisible(!modalVisible);
+              }}
+            >
+              <Text style={[styles.textStyle, { color: colors.tertiary }]}>Save E-mail</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+      <Snackbar
+        style={{ backgroundColor: colors.tertiary }}
+        visible={visibleSnackBar}
+        onDismiss={() => setVisibleSnackBar(false)}
+        action={{
+          label: 'OK',
+          onPress: () => {
+            setVisibleSnackBar(false);
+          },
+        }}
+      >
+        Image Saved!
+      </Snackbar>
+      <Snackbar
+        style={{ backgroundColor: colors.tertiary }}
+        visible={visiblePasswordSnackBar}
+        onDismiss={() => setVisibleSnackBar(false)}
+        action={{
+          label: 'OK',
+          onPress: () => {
+            setVisiblePasswordSnackBar(false);
+          },
+        }}
+      >
+        Password reset e-mail sent.
+      </Snackbar>
+      {/* <Text onPress={() => console.log(user)}>update</Text> */}
+      <Pressable onPress={() => setIsEditable(true)}>
+        {!isEditable ? (
+          <Text>{user.username}</Text>
+        ) : (
+          <TextInput
+            mode="outlined"
+            style={{ width: 80, height: 40, marginBottom: 8 }}
+            value={user.username}
+            // onChangeText={(text) => null}
+            onBlur={() => setIsEditable(false)}
+          />
+        )}
+      </Pressable>
       <Avatar.Image
         style={[styles.image, { backgroundColor: colors.primary }]}
         size={96}
@@ -110,14 +221,41 @@ function SettingsScreen({ navigation }) {
       <SegmentedChoiceButton onPressGalery={pickImage} onPressCamera={pickCameraImage} />
       <View style={styles.save_button_container}>
         <Button
+          textColor={colors.tertiary}
           buttonColor={colors.primary}
           mode="contained"
           disabled={!image}
-          onPress={handleUpload}
+          onPress={() => {
+            handleUpload();
+            setVisibleSnackBar(true);
+          }}
         >
           Save Image
         </Button>
       </View>
+
+      <View style={styles.list_item_container}>
+        <ListItem
+          icon="account-convert"
+          title="Update E-Mail"
+          description="You can change your e-mail here."
+          iconSize={37}
+          onPress={() => {
+            setModalVisible(true);
+          }}
+        />
+        <ListItem
+          icon="lock-reset"
+          title="Reset Password"
+          description={enums[Math.floor(Math.random() * enums.length)]}
+          iconSize={37}
+          onPress={() => {
+            sendPasswordResetMail();
+            setVisiblePasswordSnackBar(true);
+          }}
+        />
+      </View>
+
       <View style={styles.theme_button_container}>
         <Button
           buttonColor={colors.secondary}
