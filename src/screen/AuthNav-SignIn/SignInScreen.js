@@ -1,12 +1,12 @@
 import { useNavigation } from '@react-navigation/native';
 
 import React, { useState } from 'react';
-import { Alert, Pressable, SafeAreaView, ScrollView, View } from 'react-native';
+import { Alert, Pressable, SafeAreaView, View } from 'react-native';
 import { Text, TextInput, useTheme } from 'react-native-paper';
 
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 
 import SignButton from '../../component/Button/SignButton';
 import CustomAlert from '../../component/CustomAlert/CustomAlert';
@@ -18,12 +18,9 @@ import styles from './SignInScreen.style';
 function SignIn() {
   const { colors } = useTheme();
 
-  const user = useSelector((state) => state.user.value);
-
   const [secureText, setSecureText] = useState(true);
-
+  // useselector user vardi.
   const [userPassword, setUserPassword] = useState(null);
-  const [username, setUsername] = useState(null);
   const [userMail, setUserMail] = useState(null);
 
   const [showPasswordReset, setshowPasswordReset] = useState(false);
@@ -40,7 +37,6 @@ function SignIn() {
         const userRef = await getDoc(userDoc);
         if (userRef.exists()) {
           dispatch(signIn(userRef.data()));
-          console.log(user.username);
         }
       })
       .catch((e) => {
@@ -58,10 +54,6 @@ function SignIn() {
             break;
         }
       });
-    if (username !== user.username) {
-      console.log(username, user.username);
-      return Alert.alert('Wrong Username.');
-    }
     return navigation.navigate('ContactStack');
   };
 
@@ -78,13 +70,6 @@ function SignIn() {
       />
 
       <View>
-        <Input
-          label="Type your username"
-          placeholder="username"
-          value={username}
-          onChangeText={setUsername}
-          right={<TextInput.Icon icon="account" />}
-        />
         <Input
           label="Type your Email"
           placeholder="Email"
