@@ -22,20 +22,7 @@ function Header({ navigation, back }) {
             onPress={() => {
               Alert.alert('Meowww');
             }}
-            title="Option 1"
-          />
-          <Menu.Item
-            onPress={() => {
-              console.log('Option 2 was pressed');
-            }}
-            title="Option 2"
-          />
-          <Menu.Item
-            onPress={() => {
-              console.log('Option 3 was pressed');
-            }}
-            title="Option 3"
-            disabled
+            title="Mrrrrrr"
           />
         </Menu>
       ) : null}
