@@ -4,12 +4,16 @@ import React from 'react';
 import { Pressable, View } from 'react-native';
 import { Avatar, Text, useTheme } from 'react-native-paper';
 
+import { useSelector } from 'react-redux';
+
 import styles from './ContactsList.style';
 
 function ContactsList(props) {
   const { contacts } = props;
   const navigation = useNavigation();
   const { colors } = useTheme();
+
+  const user = useSelector((state) => state.user.value);
 
   return (
     <Pressable
@@ -27,7 +31,10 @@ function ContactsList(props) {
         }}
       />
       <View style={styles.inner_container}>
-        <Text style={[styles.username, { color: colors.tertiary }]}>{contacts.username}</Text>
+        <Text style={[styles.username, { color: colors.tertiary }]}>
+          {' '}
+          {contacts.username === user.username ? 'Note to Self' : contacts.username}
+        </Text>
       </View>
     </Pressable>
   );
