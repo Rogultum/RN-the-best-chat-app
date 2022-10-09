@@ -18,7 +18,6 @@ function ContactsList(props) {
         navigation.navigate('Chat', { receiverId: contacts.id, title: contacts.username })
       }
     >
-      {/* TODO better image */}
       <Avatar.Image
         size={50}
         source={{
