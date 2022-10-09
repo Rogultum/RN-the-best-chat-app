@@ -2,9 +2,9 @@ import { useNavigation } from '@react-navigation/native';
 
 import React, { useState } from 'react';
 import { Alert, Pressable, SafeAreaView, View } from 'react-native';
-import { Text, TextInput, useTheme } from 'react-native-paper';
+import { Snackbar, Text, TextInput, useTheme } from 'react-native-paper';
 
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { sendPasswordResetEmail, signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { useDispatch } from 'react-redux';
 
@@ -19,11 +19,12 @@ function SignIn() {
   const { colors } = useTheme();
 
   const [secureText, setSecureText] = useState(true);
-  // useselector user vardi.
+
   const [userPassword, setUserPassword] = useState(null);
   const [userMail, setUserMail] = useState(null);
 
   const [showPasswordReset, setshowPasswordReset] = useState(false);
+  const [visibleSnackBar, setVisibleSnackBar] = useState(false);
 
   const dispatch = useDispatch();
 
@@ -38,6 +39,7 @@ function SignIn() {
         if (userRef.exists()) {
           dispatch(signIn(userRef.data()));
         }
+        return navigation.navigate('ContactStack');
       })
       .catch((e) => {
         switch (e.message) {
@@ -47,15 +49,21 @@ function SignIn() {
           case 'Firebase: Error (auth/wrong-password).':
             count += 1;
             if (count < 3) Alert.alert('Wrong Password.');
-            if (count >= 3) Alert.alert('Do you want to reset your password?');
+            if (count >= 3) {
+              // Alert.alert('Do you want to reset your password?');
+              setshowPasswordReset(true);
+            }
             break;
           default:
-            Alert.alert('Something went wrong during authentication.');
+            Alert.alert('Something went wrong during authentication.', e.message);
             break;
         }
       });
-    return navigation.navigate('ContactStack');
   };
+
+  function sendPasswordResetMail() {
+    sendPasswordResetEmail(auth, userMail);
+  }
 
   const navigateSignUp = () => {
     navigation.navigate('SignUp');
@@ -64,10 +72,28 @@ function SignIn() {
   return (
     <SafeAreaView style={[styles.container]}>
       <CustomAlert
+        alert="Too many failed login attempts"
         dialog="Do you want to reset your password?"
         visible={showPasswordReset}
         onDismiss={() => setshowPasswordReset(false)}
+        onYes={() => {
+          sendPasswordResetMail();
+          setVisibleSnackBar(true);
+        }}
       />
+      <Snackbar
+        style={{ backgroundColor: colors.tertiary }}
+        visible={visibleSnackBar}
+        onDismiss={() => setVisibleSnackBar(false)}
+        action={{
+          label: 'OK',
+          onPress: () => {
+            setVisibleSnackBar(false);
+          },
+        }}
+      >
+        Password reset e-mail sent.
+      </Snackbar>
 
       <View>
         <Input
