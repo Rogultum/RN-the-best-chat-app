@@ -6,13 +6,7 @@ import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
-  apiKey: 'AIzaSyCeQWYMEg6SECD9BOPhrc4NH4Dn6LUDOtM',
-  authDomain: 'the-best-chat-apprn.firebaseapp.com',
-  projectId: 'the-best-chat-apprn',
-  storageBucket: 'the-best-chat-apprn.appspot.com',
-  messagingSenderId: '1012265791747',
-  appId: '1:1012265791747:web:1d856af718669a733f7936',
-  measurementId: 'G-ERPW46YSZ2',
+
 };
 
 // Initialize Firebase
